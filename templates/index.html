@@ -1,0 +1,56 @@
+{% extends "layout.html" %} {% block content %}
+<div class="header">
+  <h3>Apex Legends Ranking</h3>
+</div>
+<div class="content-body">
+  <div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Player ID</th>
+          <th>Rank Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key in rank_list_sorted %}
+        <tr>
+          <td>{{ key }}</td>
+          <td>{{ rank_list_sorted[key] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="playerStats">
+    <div class="searchForm">
+      <form method="POST" action="/">
+        <input type="text" name="playerId" placeholder="player id" />
+
+        <select name="platform">
+          <option value="origin" selected>Origin</option>
+          <option value="psn">PlayStation</option>
+          <option value="xbox">XBox</option>
+        </select>
+
+        <input type="submit" value="Search" />
+      </form>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for key in stats_list %}
+        <tr>
+          <td>{{ key }}</td>
+          <td>{{ stats_list[key] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,6 @@
+.chalice/deployments/
+.chalice/venv/
+
+credentials.json
+chalicelib/credentials.json
+chalicelib/__init__.py
