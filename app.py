@@ -3,8 +3,10 @@ import os
 import sys
 from pprint import pprint
 
+import boto3
 import jinja2  # import Environment, FileSystemLoader, select_autoescape
 import requests
+from boto3.dynamodb.conditions import Key
 from chalice import Chalice, Response
 from flask import Flask, render_template, request
 
@@ -23,23 +25,42 @@ TRN_URL = 'https://public-api.tracker.gg/v2/apex/standard'
 # ユーザープロフィールを取得
 
 
-def get_streamer_rank():
-    streamer_ids = ["CR_RAS_LOG", "NIRUi7", "tttcheekyttt_SBI"]  # , "りんしゃんつかい"]  # ,
-    # "ULT_ちひ太郎",	"ABC_EluAndrade	",
-    # "丁1_かえで",	"Xogkewlkvy",
-    # "Hajimen_2434",	"umiushi_2434",	"mugi_ienaga"]
-    rank_list = {}
-    for player_id in streamer_ids:
-        response = GetProfile('origin', player_id)
-        CheckResponseStats(response)
+def query_db(dynamodb=None):
+    if not dynamodb:
+        # dynamodb = boto3.resource('dynamodb', endpoint_url='http://localhost:8000')
+        dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table('ApexLegendsRanking')
+    response = table.query(
+        KeyConditionExpression=Key('ranking').eq('ranking')
+    )
+    print(type(response['Items'][0]['ranking_list']))
+    print(response['Items'][0]['ranking_list'])
+    return response['Items'][0]['ranking_list']
 
-        user_stats = json.loads(response.text)
-        stats = user_stats['data']['segments'][0]['stats']
-        for key, value in stats.items():
-            if key == "rankScore":
-                rank_list[player_id] = int(value['displayValue'].replace(",", ""))
-    rank_list_sorted = sorted(rank_list.items(), key=lambda x: x[1], reverse=True)
-    return rank_list_sorted
+
+def to_dict(ranking_list):
+    ranking_list_formatted = [x for x in map(lambda n:(n[0], int(n[1])), ranking_list)]  # [['CR_RAS_LOG', Decimal('17442')]] -> [('CR_RAS_LOG', 17442)]
+    result = dict(ranking_list_formatted)
+    return result
+
+
+# def get_streamer_rank():
+#     streamer_ids = ["CR_RAS_LOG"]  # , "NIRUi7", "tttcheekyttt_SBI"]  # , "りんしゃんつかい"]  # ,
+#     # "ULT_ちひ太郎",	"ABC_EluAndrade	",
+#     # "丁1_かえで",	"Xogkewlkvy",
+#     # "Hajimen_2434",	"umiushi_2434",	"mugi_ienaga"]
+#     rank_list = {}
+#     for player_id in streamer_ids:
+#         response = GetProfile('origin', player_id)
+#         CheckResponseStats(response)
+
+#         user_stats = json.loads(response.text)
+#         stats = user_stats['data']['segments'][0]['stats']
+#         for key, value in stats.items():
+#             if key == "rankScore":
+#                 rank_list[player_id] = int(value['displayValue'].replace(",", ""))
+#     rank_list_sorted = sorted(rank_list.items(), key=lambda x: x[1], reverse=True)
+#     return rank_list_sorted
 
 
 def GetProfile(platform, playerId):
@@ -77,7 +98,9 @@ def DispStats(json):
 @ app.route('/', methods=["GET", "POST"], content_types=["*/*"])
 def index():
 
-    rank_list_sorted = get_streamer_rank()
+    # rank_list_sorted = get_streamer_rank()
+    rank_list_from_db = query_db()
+    rank_list_sorted = to_dict(rank_list_from_db)
     print(rank_list_sorted)
 
     # if request.method == "POST":
@@ -128,9 +151,9 @@ def cssindex():
     return Response(body=data, status_code=200, headers={"Content-Type": "text/css", "Access-Control-Allow-Origin": "*"})
 
 
-@app.route('/favicon.ico')
+# @app.route('/favicon.ico')
 @app.route('/chalicelib/favicon.ico')
-def cfaviconindex():
+def faviconindex():
     with open('chalicelib/static/favicon.ico', 'rb') as fp:
         data = fp.read()
     return Response(body=data, status_code=200, headers={"Content-Type": "image/png", "Access-Control-Allow-Origin": "*"})
