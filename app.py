@@ -70,8 +70,12 @@ def GetProfile(platform, playerId):
     sendUrl += '?TRN-Api-Key=' + API_KEY
     print('sendUrl :', sendUrl)
 
+    headers = {'TRN-Api-Key': API_KEY}
+
     # http getリクエスト送信
-    response = requests.get(sendUrl)
+    response = requests.get(sendUrl, headers=headers)
+
+    print('status_code :', response.status_code)
 
     return response
 
@@ -152,11 +156,11 @@ def cssindex():
 
 
 # @app.route('/favicon.ico')
-@app.route('/chalicelib/favicon.ico')
+@app.route('/chalicelib/static/images/favicon.ico')
 def faviconindex():
-    with open('chalicelib/static/favicon.ico', 'rb') as fp:
+    with open('chalicelib/static/images/favicon.ico', 'rb') as fp:
         data = fp.read()
-    return Response(body=data, status_code=200, headers={"Content-Type": "image/png", "Access-Control-Allow-Origin": "*"})
+    return Response(body=data, status_code=200, headers={"Content-Type": "*/*", "Access-Control-Allow-Origin": "*"})
 
 
 if __name__ == "__main__":
